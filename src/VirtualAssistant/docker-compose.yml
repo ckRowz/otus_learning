@@ -1,0 +1,34 @@
+version: '3.4'
+
+services:
+  virtual-assistant:
+    image: virtualassistant
+    container_name: virtual-assistant
+    ports:
+      - "5151:8000" 
+    build:
+      context: .
+      dockerfile: VirtualAssistant.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__VirtAssDb=Host=host.docker.internal;Port=5432;Database=virtual_assistant;Username=virtual_assistant;Password=virt_ass; 
+
+  postgresql:
+    image: "postgres:latest"
+    container_name: virtual-assistant-db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "virtual_assistant"
+      POSTGRES_USER: "virtual_assistant"
+      POSTGRES_PASSWORD: "virt_ass"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - type: volume
+        source: virtual_assistant_db_volume
+        target: /var/lib/postgresql/data
+
+volumes:
+  virtual_assistant_db_volume:
+    driver: local

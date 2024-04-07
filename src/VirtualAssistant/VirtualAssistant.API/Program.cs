@@ -1,16 +1,24 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Text;
 using System.Text.Json;
+using VirtualAssistant.API.Data;
 
 namespace VirtualAssistant.API
 {
     public class Program
     {
+        protected Program() { }
+
         private const string CorsPolicy = "CorsPolicy";
+        // -> IConfigutation
+        private const int KestrelPort = 8000;
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var configuration = builder.Configuration;
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -18,9 +26,12 @@ namespace VirtualAssistant.API
 
             builder.Services.AddHealthChecks();
 
+            builder.Services.AddDbContext<VirtualAssistantContext>(options =>
+                options.UseNpgsql(configuration.GetConnectionString("VirtAssDb")));
+
             builder.WebHost
                 .UseKestrel()
-                .UseUrls("http://+:8000");
+                .UseUrls($"http://+:{KestrelPort}");
 
             AddCors(builder.Services);
 
@@ -33,10 +44,21 @@ namespace VirtualAssistant.API
             app.UseCors(CorsPolicy);
 
             ConfigureEndpoints(app);
+            MigrateDb(app.Services);
 
             app.Run();
         }
 
+        private static void MigrateDb(IServiceProvider serviceProvider)
+        {
+            using var scope = serviceProvider.CreateScope();
+            using var context = scope.ServiceProvider.GetRequiredService<VirtualAssistantContext>();
+
+            if (context.Database.GetPendingMigrations().Any())
+                context.Database.Migrate();
+        }
+
+        //для домашки пойдет
         private static void AddCors(IServiceCollection services)
         {
             services.AddCors(options =>

@@ -1,12 +1,12 @@
 {
   "profiles": {
-    "Container (Dockerfile)": {
-      "commandName": "Docker",
+    "VirtualAssistant.API": {
+      "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
       "environmentVariables": {
-        "ASPNETCORE_HTTP_PORTS": "8000"
-      }
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:59440;http://localhost:59441"
     }
   }
 }
