@@ -24,6 +24,10 @@ namespace VirtualAssistant.API.Controllers
             return Ok(CreateFromDomain(user));
         }
 
+        [HttpGet("[action]")]
+        public async Task<ActionResult<IEnumerable<UserDto>>> All(CancellationToken token)
+            => new(await context.Users.Select(x => CreateFromDomain(x)).ToListAsync(token));
+
         /// <summary>
         /// Создать пользователя
         /// </summary>

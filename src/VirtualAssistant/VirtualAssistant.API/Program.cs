@@ -12,8 +12,7 @@ namespace VirtualAssistant.API
         protected Program() { }
 
         private const string CorsPolicy = "CorsPolicy";
-        // -> IConfigutation
-        private const int KestrelPort = 8000;
+        private const int DefaultKestrelPort = 8000;
 
         public static void Main(string[] args)
         {
@@ -29,9 +28,16 @@ namespace VirtualAssistant.API
             builder.Services.AddDbContext<VirtualAssistantContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("VirtAssDb")));
 
+            var port = DefaultKestrelPort;
+            if (configuration.GetSection("HostOptions").Exists())
+            {
+                var specificPortSection = configuration["HostOptions:Port"];
+                _ = int.TryParse(specificPortSection, out port);
+            }
+
             builder.WebHost
                 .UseKestrel()
-                .UseUrls($"http://+:{KestrelPort}");
+                .UseUrls($"http://+:{port}");
 
             AddCors(builder.Services);
 
@@ -52,10 +58,19 @@ namespace VirtualAssistant.API
         private static void MigrateDb(IServiceProvider serviceProvider)
         {
             using var scope = serviceProvider.CreateScope();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             using var context = scope.ServiceProvider.GetRequiredService<VirtualAssistantContext>();
 
-            if (context.Database.GetPendingMigrations().Any())
-                context.Database.Migrate();
+            try
+            {
+                if (context.Database.GetPendingMigrations().Any())
+                    context.Database.Migrate();
+            }
+            catch(Exception ex)
+            {
+                logger.LogError(ex, "Ошибка при миграции БД");
+                throw;
+            }
         }
 
         //для домашки пойдет

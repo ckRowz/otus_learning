@@ -11,7 +11,7 @@ services:
       dockerfile: VirtualAssistant.API/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__VirtAssDb=Host=host.docker.internal;Port=5432;Database=virtual_assistant;Username=virtual_assistant;Password=virt_ass; 
+      - ConnectionStrings__VirtAssDb=Host=postgresql;Port=5432;Database=virtual_assistant;Username=virtual_assistant;Password=virt_ass;
 
   postgresql:
     image: "postgres:latest"
