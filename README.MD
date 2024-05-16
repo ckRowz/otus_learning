@@ -55,6 +55,7 @@ GET http://arch.homework/otusapp/eygerman/user/{id}
 PUT http://arch.homework/otusapp/eygerman/user
 ```JSON
 {
+    "Id": 1, // id записи, данные которой требуется обновить
     "UserName": "uName_upd",
     "FIrstName": "fName_upd",
     "LastName": "lName_upd",
