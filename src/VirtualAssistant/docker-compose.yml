@@ -6,6 +6,7 @@ services:
     container_name: virtual-assistant
     ports:
       - "5151:8000" 
+      - "5152:8001"
     build:
       context: .
       dockerfile: VirtualAssistant.API/Dockerfile

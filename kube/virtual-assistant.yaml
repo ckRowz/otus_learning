@@ -20,7 +20,7 @@ kind: Deployment
 metadata:
   name: virtual-assistant-dp
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: virtual-assistant-app
@@ -31,7 +31,7 @@ spec:
     spec:
       containers:
         - name: virtual-assistant
-          image: cl6wn/virtual_assistant:v2.1.3
+          image: cl6wn/virtual_assistant:v2.1.7
           env:
             - name: HostOptions__Port
               valueFrom:
@@ -49,17 +49,23 @@ spec:
               cpu: "500m"
           ports:
             - containerPort: 8000
+            - containerPort: 8001
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: virtual-assistant-svc
+  labels:
+    app: virtual-assistant
 spec:
   selector:
     app: virtual-assistant-app
   ports:
-    - port: 8000
+    - name: main
+      port: 8000
+    - name: metrics
+      port: 8001
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -83,3 +89,32 @@ spec:
                 name: virtual-assistant-svc
                 port:
                   number: 8000
+          # для дебага, оценить метрики снаружи куба без форварда портов
+          - path: /prometheus/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: virtual-assistant-svc
+                port:
+                  number: 8001
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: virtual-assistant-monitor
+  labels:
+    app: virtual-assistant-monitor  
+spec:
+  endpoints:
+    - port: metrics
+      scrapeTimeout: 30s
+      path: /metrics
+      honorLabels: true
+      scheme: http
+  namespaceSelector:
+    matchNames:
+      - default
+  selector:
+    matchLabels:
+      app: virtual-assistant
