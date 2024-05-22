@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Prometheus;
 using System.Text;
 using System.Text.Json;
 using VirtualAssistant.API.Data;
@@ -43,6 +44,8 @@ namespace VirtualAssistant.API
 
             var app = builder.Build();
 
+            _ = new KestrelMetricServer(new() { Port = (ushort)(port + 1) }).Start();
+
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseAuthorization();
@@ -66,7 +69,7 @@ namespace VirtualAssistant.API
                 if (context.Database.GetPendingMigrations().Any())
                     context.Database.Migrate();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 logger.LogError(ex, "Ошибка при миграции БД");
                 throw;
@@ -90,10 +93,7 @@ namespace VirtualAssistant.API
         private static void ConfigureEndpoints(IEndpointRouteBuilder endpoints)
         {
             endpoints.MapDefaultControllerRoute();
-            endpoints.MapHealthChecks("/health", new HealthCheckOptions()
-            {
-                ResponseWriter = WriteResponse
-            }).RequireCors(CorsPolicy);
+            endpoints.MapHealthChecks("/health", new HealthCheckOptions() { ResponseWriter = WriteResponse }).RequireCors(CorsPolicy);
         }
 
         private static Task WriteResponse(HttpContext context, HealthReport healthReport)
